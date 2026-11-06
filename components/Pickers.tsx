@@ -130,6 +130,7 @@ const WEEKDAYS: Record<string, string[]> = {
   en: ["S", "M", "T", "W", "T", "F", "S"],
   zh: ["日", "一", "二", "三", "四", "五", "六"],
   ko: ["일", "월", "화", "수", "목", "금", "토"],
+  vi: ["CN", "T2", "T3", "T4", "T5", "T6", "T7"],
 };
 
 /** this month as a grid: its days from the weekday it starts on, with today on a filled circle */

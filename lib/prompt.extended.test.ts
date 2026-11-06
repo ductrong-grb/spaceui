@@ -18,7 +18,9 @@
  */
 import { describe, expect, it } from "vitest";
 import { buildPrompt, effectivePrompt } from "./prompt";
-import { Lang } from "./i18n";
+import { Lang as UiLang } from "./i18n";
+
+type Lang = Exclude<UiLang, "vi">;
 import {
   Doc,
   Frame,

@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { Lang, setGlobalLang } from "./i18n";
+import { Lang as UiLang, setGlobalLang } from "./i18n";
+
+/** the prompt is written in four languages; Vietnamese sketches get the English one */
+type Lang = Exclude<UiLang, "vi">;
 import { buildPrompt } from "./prompt";
 import { BACK_TARGET, DEFAULT_THEME, Doc, Item, Platform, defaultTabs, makeItem, paletteOf } from "./tokens";
 

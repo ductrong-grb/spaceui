@@ -1,4 +1,8 @@
-import { KIND_TEXT, Lang, SWIPE_TEXT, TRANSITION_TEXT, getLang } from "./i18n";
+import { KIND_TEXT, Lang as UiLang, SWIPE_TEXT, TRANSITION_TEXT, getLang } from "./i18n";
+
+/** the languages the generated prompt is written in; Vietnamese sketches get an English prompt */
+type Lang = Exclude<UiLang, "vi">;
+const promptLang = (l: UiLang): Lang => (l === "vi" ? "en" : l);
 import { constrainModalRails } from "./rail";
 import {
   CONTENT_W,
@@ -1742,7 +1746,8 @@ export const PROMPT_OPTION_TEXT: Record<Lang, Record<PromptOption, { label: stri
  *  begins on. Read off the text itself, so an edited prompt keeps its marks while its headings
  *  and screen names still stand. */
 export type PromptMark = { kind: "section" | "screen"; label: string; line: number; frameId?: string };
-export function promptMarks(text: string, frames: Frame[], lang: Lang = getLang()): PromptMark[] {
+export function promptMarks(text: string, frames: Frame[], uiLang: UiLang = getLang()): PromptMark[] {
+  const lang = promptLang(uiLang);
   const ph = PH[lang];
   const q = quote(lang);
   const out: PromptMark[] = [];
@@ -1766,7 +1771,8 @@ export function promptMarks(text: string, frames: Frame[], lang: Lang = getLang(
   return out;
 }
 
-export function buildPrompt(doc: Doc, widths: Record<string, number>, onlyFrameId?: string, lang: Lang = getLang()): string {
+export function buildPrompt(doc: Doc, widths: Record<string, number>, onlyFrameId?: string, uiLang: UiLang = getLang()): string {
+  const lang = promptLang(uiLang);
   doc = { ...doc, groups: constrainModalRails(doc.groups) };
   const th = normalizeTheme(doc.theme);
   const pal = paletteOf(doc.paletteKey, doc.customPalette, th);
@@ -1886,4 +1892,4 @@ export function buildPrompt(doc: Doc, widths: Record<string, number>, onlyFrameI
 }
 
 /** the prompt to hand out: the author's edited text when there is one, otherwise the generated one */
-export const effectivePrompt = (doc: Doc, widths: Record<string, number>, lang: Lang = getLang()): string => (doc.promptEdit !== undefined ? doc.promptEdit : buildPrompt(doc, widths, undefined, lang));
+export const effectivePrompt = (doc: Doc, widths: Record<string, number>, lang: UiLang = getLang()): string => (doc.promptEdit !== undefined ? doc.promptEdit : buildPrompt(doc, widths, undefined, lang));

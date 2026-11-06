@@ -290,7 +290,7 @@ function GroupPanel({
   selectionKey: string;
 }) {
   const lang = useLang();
-  const title = grouped ? t("group", lang) : lang === "en" ? `${count} ${t("selectedParts", lang)}` : `${count}${t("selectedParts", lang)}`;
+  const title = grouped ? t("group", lang) : lang === "en" || lang === "vi" ? `${count} ${t("selectedParts", lang)}` : `${count}${t("selectedParts", lang)}`;
   const toggle = grouped ? onUngroup : onGroup;
   return (
     <PanelShell
