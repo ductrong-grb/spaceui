@@ -852,7 +852,7 @@ export default function Editor({ initialLang, onReady }: { initialLang: Lang; on
   /* everyone works on phone screens; a phone gets one fixed screen and the select tool only */
   useEffect(() => {
     const mq = window.matchMedia(
-      "(max-width: 0px),
+      "(max-width: 0px)",
     );
     const apply = () => {
       const m = mq.matches;
