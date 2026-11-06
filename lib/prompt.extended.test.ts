@@ -18,6 +18,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { buildPrompt, effectivePrompt } from "./prompt";
+import { Lang } from "./i18n";
 import {
   Doc,
   Frame,
@@ -27,6 +28,7 @@ import {
   PHONE_W,
   PHONE_H,
   makeItem,
+  LINK_TARGET,
 } from "./tokens";
 
 const widths: Record<string, number> = {};
@@ -192,6 +194,35 @@ describe("buildPrompt — items are named in language", () => {
   });
 });
 
+describe("extended FAB scroll-collapse prompt", () => {
+  const BEHAVIOR: Record<Lang, string> = {
+    ja: "本文を下へスクロールするとアイコンのみの標準 FAB に右側へ縮まり（右端は固定）、スクロールを止めても縮んだまま。上へスクロールすると拡張 FAB に戻る",
+    en: "when the body scrolls down, it collapses toward the right into an icon-only standard FAB (right edge fixed) and stays collapsed after scrolling stops; scrolling up expands it back to the extended FAB",
+    zh: "正文向下滚动时向右收起为仅显示图标的标准 FAB（右边缘固定），停止滚动后仍保持收起；向上滚动时恢复为扩展 FAB",
+    ko: "본문을 아래로 스크롤하면 오른쪽으로 아이콘만 표시하는 표준 FAB까지 접히고(오른쪽 가장자리 고정) 스크롤을 멈춰도 접힌 상태를 유지하며, 위로 스크롤하면 확장 FAB로 돌아온다",
+  };
+
+  it.each(["ja", "en", "zh", "ko"] as Lang[])("describes the enabled scroll transform in %s", (lang) => {
+    const fab: Item = { ...makeItem("extendedFab"), id: "fab", label: "Add", icon: "add", collapseOnScroll: true };
+    expect(buildPrompt(baseDoc({ frames: [{ ...phoneFrame, length: PHONE_H * 2 }], groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [fab] }] }), widths, undefined, lang)).toContain(BEHAVIOR[lang]);
+  });
+
+  it.each(["ja", "en", "zh", "ko"] as Lang[])("does not describe the transform when the screen does not scroll in %s", (lang) => {
+    const fab: Item = { ...makeItem("extendedFab"), id: "fab", label: "Add", icon: "add", collapseOnScroll: true };
+    expect(buildPrompt(baseDoc({ groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [fab] }] }), widths, undefined, lang)).not.toContain(BEHAVIOR[lang]);
+  });
+
+  it.each(["ja", "en", "zh", "ko"] as Lang[])("does not describe the transform without an icon to fold into in %s", (lang) => {
+    const fab: Item = { ...makeItem("extendedFab"), id: "fab", label: "Add", icon: null, collapseOnScroll: true };
+    expect(buildPrompt(baseDoc({ frames: [{ ...phoneFrame, length: PHONE_H * 2 }], groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [fab] }] }), widths, undefined, lang)).not.toContain(BEHAVIOR[lang]);
+  });
+
+  it.each(["ja", "en", "zh", "ko"] as Lang[])("does not describe the transform when disabled in %s", (lang) => {
+    const fab: Item = { ...makeItem("extendedFab"), id: "fab", label: "Add", icon: "add", collapseOnScroll: false };
+    expect(buildPrompt(baseDoc({ frames: [{ ...phoneFrame, length: PHONE_H * 2 }], groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [fab] }] }), widths, undefined, lang)).not.toContain(BEHAVIOR[lang]);
+  });
+});
+
 describe("buildPrompt — platform switch", () => {
   it("Android platform mentions Android / Material", () => {
     const doc = baseDoc({ platform: "android" });
@@ -224,6 +255,22 @@ describe("buildPrompt — behavior / actions", () => {
     const doc = baseDoc({ groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [item] }] });
     const out = buildPrompt(doc, widths, undefined, "en");
     expect(out).toMatch(/go back|previous screen/i);
+  });
+
+  it("a button with a link action names the address it opens, and says nothing without one", () => {
+    const linked: Item = { id: "b1", kind: "button", label: "Docs", icon: null, variant: "filled", action: { to: LINK_TARGET, transition: "none", url: "example.com/docs" } };
+    const doc = baseDoc({ groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [linked] }] });
+    expect(buildPrompt(doc, widths, undefined, "en")).toContain("opens https://example.com/docs in a new browser tab");
+    const blank = baseDoc({ groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [{ ...linked, action: { to: LINK_TARGET, transition: "none" } }] }] });
+    expect(buildPrompt(blank, widths, undefined, "en")).not.toMatch(/browser tab/);
+  });
+
+  it("a button that was given a height says so, with the M3 size it lands on", () => {
+    const tall: Item = { id: "b1", kind: "button", label: "Start", icon: null, variant: "filled", size2: 96 };
+    const doc = baseDoc({ groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [tall] }] });
+    expect(buildPrompt(doc, widths, undefined, "en")).toContain("(96dp tall / M3 L)");
+    const plain = baseDoc({ groups: [{ id: "g", x: 100, y: 100, axis: "x", items: [{ ...tall, size2: undefined }] }] });
+    expect(buildPrompt(plain, widths, undefined, "en")).not.toMatch(/\(\d+dp tall/);
   });
 
   it("an item with action.to=<frameId> generates an 'opens the ... screen' note", () => {
